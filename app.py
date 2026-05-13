@@ -1,7 +1,14 @@
 import streamlit as st
-import pandas as pd
 import numpy as np
+import pandas as pd
 import joblib
+
+# PAGE CONFIG
+
+st.set_page_config(
+    page_title="Electricity Bill Prediction",
+    page_icon="⚡"
+)
 
 # LOAD MODEL AND SCALER
 
@@ -9,40 +16,26 @@ model = joblib.load("electricity_bill_model.pkl")
 
 scaler = joblib.load("scaler.pkl")
 
-# LOAD DATASET
+# GET FEATURE NAMES
 
-df = pd.read_csv("electricity_bill.csv")
-
-# KEEP ONLY NUMERIC COLUMNS
-
-df = df.select_dtypes(include=np.number)
-
-# TARGET COLUMN
-
-target_column = df.columns[-1]
-
-# FEATURE COLUMNS
-
-feature_columns = df.drop(target_column, axis=1).columns
+feature_names = scaler.feature_names_in_
 
 # TITLE
 
-st.title("Electricity Bill Prediction")
+st.title("⚡ Electricity Bill Prediction")
 
 st.write(
     "Predict Electricity Bill using Machine Learning"
 )
 
-# STORE USER INPUTS
+# USER INPUTS
 
 user_inputs = []
 
-# CREATE INPUT BOXES DYNAMICALLY
-
-for col in feature_columns:
+for feature in feature_names:
 
     value = st.number_input(
-        f"Enter {col}",
+        f"Enter {feature}",
         value=0.0
     )
 
@@ -52,20 +45,25 @@ for col in feature_columns:
 
 if st.button("Predict"):
 
-    # CONVERT TO ARRAY
+    # CREATE DATAFRAME
 
-    input_data = np.array([user_inputs])
+    input_data = pd.DataFrame(
+        [user_inputs],
+        columns=feature_names
+    )
 
-    # SCALE DATA
+    # SCALE INPUT
 
-    input_data = scaler.transform(input_data)
+    input_scaled = scaler.transform(input_data)
 
     # PREDICT
 
-    prediction = model.predict(input_data)
+    prediction = model.predict(input_scaled)
 
     # SHOW RESULT
 
     st.success(
         f"Predicted Electricity Bill = ₹ {prediction[0]:.2f}"
     )
+
+    st.balloons()
