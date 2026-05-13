@@ -1,75 +1,62 @@
-# ==========================================
-# app.py
-# ELECTRICITY BILL PREDICTION APP
-# ==========================================
-
 import streamlit as st
 import pandas as pd
 import numpy as np
 import joblib
 
-# ==========================================
 # LOAD MODEL AND SCALER
-# ==========================================
 
 model = joblib.load("electricity_bill_model.pkl")
 
 scaler = joblib.load("scaler.pkl")
 
-# ==========================================
+# LOAD DATASET
+
+df = pd.read_csv("electricity_bill.csv")
+
+# KEEP ONLY NUMERIC COLUMNS
+
+df = df.select_dtypes(include=np.number)
+
+# TARGET COLUMN
+
+target_column = df.columns[-1]
+
+# FEATURE COLUMNS
+
+feature_columns = df.drop(target_column, axis=1).columns
+
 # TITLE
-# ==========================================
 
 st.title("Electricity Bill Prediction")
 
 st.write(
-    "Predict Electricity Bill using Machine Learning Regression"
+    "Predict Electricity Bill using Machine Learning"
 )
 
-# ==========================================
-# USER INPUTS
-# ==========================================
+# STORE USER INPUTS
 
-units_consumed = st.number_input(
-    "Units Consumed",
-    min_value=0.0
-)
+user_inputs = []
 
-ac_hours = st.number_input(
-    "AC Usage Hours",
-    min_value=0.0
-)
+# CREATE INPUT BOXES DYNAMICALLY
 
-family_members = st.number_input(
-    "Family Members",
-    min_value=1
-)
+for col in feature_columns:
 
-appliance_count = st.number_input(
-    "Appliance Count",
-    min_value=0
-)
+    value = st.number_input(
+        f"Enter {col}",
+        value=0.0
+    )
 
-# ==========================================
-# CREATE INPUT ARRAY
-# ==========================================
+    user_inputs.append(value)
 
-input_data = np.array([
-    [
-        units_consumed,
-        ac_hours,
-        family_members,
-        appliance_count
-    ]
-])
+# PREDICT BUTTON
 
-# ==========================================
-# PREDICTION BUTTON
-# ==========================================
+if st.button("Predict"):
 
-if st.button("Predict Electricity Bill"):
+    # CONVERT TO ARRAY
 
-    # SCALE INPUT
+    input_data = np.array([user_inputs])
+
+    # SCALE DATA
 
     input_data = scaler.transform(input_data)
 
@@ -77,23 +64,8 @@ if st.button("Predict Electricity Bill"):
 
     prediction = model.predict(input_data)
 
-    # DISPLAY RESULT
+    # SHOW RESULT
 
     st.success(
         f"Predicted Electricity Bill = ₹ {prediction[0]:.2f}"
     )
-
-# ==========================================
-# SAMPLE DATA
-# ==========================================
-
-st.subheader("Sample Input")
-
-sample_df = pd.DataFrame({
-    "Units_Consumed": [250],
-    "AC_Hours": [6],
-    "Family_Members": [4],
-    "Appliance_Count": [8]
-})
-
-st.table(sample_df)
